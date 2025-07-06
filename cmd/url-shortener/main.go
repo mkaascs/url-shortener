@@ -1,11 +1,17 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"url-shortener/internal/config"
+	"url-shortener/internal/logging"
 )
 
 func main() {
 	cfg := config.MustLoad()
-	fmt.Println(cfg)
+	lg, err := logging.Setup(cfg.Env)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	lg.Debug(cfg.DbConnectionString)
 }
