@@ -2,8 +2,11 @@ package main
 
 import (
 	"log"
+	"log/slog"
+	"os"
 	"url-shortener/internal/config"
 	"url-shortener/internal/logging"
+	"url-shortener/internal/storage/mysql"
 )
 
 func main() {
@@ -13,5 +16,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	lg.Debug(cfg.DbConnectionString)
+	lg.Info("starting url-shortener", slog.String("env", cfg.Env))
+
+	_, err = mysql.New(cfg.DbConnectionString)
+	if err != nil {
+		lg.Error("failed to init storage", err)
+		os.Exit(1)
+	}
+
+	lg.Info("storage was initialized")
 }
