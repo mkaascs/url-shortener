@@ -1,0 +1,6 @@
+env: "local" # prod, dev, local
+db_connection_string: "Server=127.0.0.1;Database=URLShortener;Uid=root;Pwd=makas1506;"
+http_server:
+  address: "localhost:5055"
+  timeout: 4s
+  idle_timeout: 60s
