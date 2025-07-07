@@ -2,12 +2,44 @@ package mysql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
+	"url-shortener/internal/storage"
+)
+
+const (
+	duplicateEntryErrCode = 1062
 )
 
 type Storage struct {
 	Database *sql.DB
+}
+
+func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
+	const fn = "storage.mysql.SaveURL"
+
+	stmt, err := s.Database.Prepare(`INSERT INTO url(url, alias) VALUES(?, ?)`)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", fn, err)
+	}
+
+	res, err := stmt.Exec(urlToSave, alias)
+	if err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == duplicateEntryErrCode {
+			return 0, fmt.Errorf("%s: %w", fn, storage.ErrURLExists)
+		}
+
+		return 0, fmt.Errorf("%s: %w", fn, err)
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("%s: failed to get last insert id: %w", fn, err)
+	}
+
+	return id, nil
 }
 
 func New(connectionString string) (*Storage, error) {
@@ -20,7 +52,7 @@ func New(connectionString string) (*Storage, error) {
 
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS url(
-	    id INTEGER PRIMARY KEY,
+	    id INTEGER PRIMARY KEY AUTO_INCREMENT,
 	    alias VARCHAR(255) UNIQUE NOT NULL,
 	    url TEXT NOT NULL);`)
 
