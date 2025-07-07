@@ -1,10 +1,13 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"log/slog"
 	"os"
 	"url-shortener/internal/config"
+	"url-shortener/internal/http-server/middleware/logger"
 	"url-shortener/internal/logging"
 	"url-shortener/internal/logging/sl"
 	"url-shortener/internal/storage/mysql"
@@ -26,4 +29,11 @@ func main() {
 	}
 
 	lg.Info("storage was initialized")
+
+	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
+	router.Use(logger.New(lg))
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
 }
