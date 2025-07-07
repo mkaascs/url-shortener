@@ -16,13 +16,19 @@ type Storage struct {
 	Database *sql.DB
 }
 
-func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
+func (s *Storage) SaveURL(urlToSave string, alias string) (_ int64, err error) {
 	const fn = "storage.mysql.SaveURL"
 
 	stmt, err := s.Database.Prepare(`INSERT INTO url(url, alias) VALUES(?, ?)`)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", fn, err)
 	}
+
+	defer func(stmt *sql.Stmt) {
+		if err == nil {
+			err = stmt.Close()
+		}
+	}(stmt)
 
 	res, err := stmt.Exec(urlToSave, alias)
 	if err != nil {
@@ -40,6 +46,33 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func (s *Storage) GetURL(alias string) (_ string, err error) {
+	const fn = "storage.mysql.GetURL"
+
+	stmt, err := s.Database.Prepare(`SELECT url FROM url WHERE alias = ?`)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", fn, err)
+	}
+
+	defer func(stmt *sql.Stmt) {
+		if err == nil {
+			err = stmt.Close()
+		}
+	}(stmt)
+
+	var url string
+	err = stmt.QueryRow(alias).Scan(&url)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", storage.ErrURLNotFound
+		}
+
+		return "", fmt.Errorf("%s: %w", fn, err)
+	}
+
+	return url, nil
 }
 
 func New(connectionString string) (*Storage, error) {
