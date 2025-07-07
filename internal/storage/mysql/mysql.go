@@ -25,9 +25,12 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (_ int64, err error) {
 	}
 
 	defer func(stmt *sql.Stmt) {
-		if err == nil {
-			err = stmt.Close()
+		if err != nil {
+			_ = stmt.Close()
+			return
 		}
+
+		err = stmt.Close()
 	}(stmt)
 
 	res, err := stmt.Exec(urlToSave, alias)
@@ -57,9 +60,12 @@ func (s *Storage) GetURL(alias string) (_ string, err error) {
 	}
 
 	defer func(stmt *sql.Stmt) {
-		if err == nil {
-			err = stmt.Close()
+		if err != nil {
+			_ = stmt.Close()
+			return
 		}
+
+		err = stmt.Close()
 	}(stmt)
 
 	var url string
@@ -73,6 +79,40 @@ func (s *Storage) GetURL(alias string) (_ string, err error) {
 	}
 
 	return url, nil
+}
+
+func (s *Storage) DeleteURL(alias string) (err error) {
+	const fn = "storage.mysql.DeleteURL"
+
+	stmt, err := s.Database.Prepare(`DELETE FROM url WHERE alias = ?`)
+	if err != nil {
+		return fmt.Errorf("%s: %w", fn, err)
+	}
+
+	defer func(stmt *sql.Stmt) {
+		if err != nil {
+			_ = stmt.Close()
+			return
+		}
+
+		err = stmt.Close()
+	}(stmt)
+
+	res, err := stmt.Exec(alias)
+	if err != nil {
+		return fmt.Errorf("%s: %w", fn, err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%s: %w", fn, err)
+	}
+
+	if rowsAffected == 0 {
+		return storage.ErrURLNotFound
+	}
+
+	return nil
 }
 
 func New(connectionString string) (*Storage, error) {
