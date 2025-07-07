@@ -6,6 +6,7 @@ import (
 	"os"
 	"url-shortener/internal/config"
 	"url-shortener/internal/logging"
+	"url-shortener/internal/logging/sl"
 	"url-shortener/internal/storage/mysql"
 )
 
@@ -20,7 +21,7 @@ func main() {
 
 	_, err = mysql.New(cfg.DbConnectionString)
 	if err != nil {
-		lg.Error("failed to init storage", err)
+		lg.Error("failed to init storage", sl.Error(err))
 		os.Exit(1)
 	}
 
