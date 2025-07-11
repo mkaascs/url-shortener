@@ -2,7 +2,9 @@ package response
 
 import (
 	"fmt"
+	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
+	"net/http"
 )
 
 type Response struct {
@@ -13,7 +15,7 @@ func Error(errorMessages ...string) Response {
 	return Response{Errors: errorMessages}
 }
 
-func ValidateError(errs validator.ValidationErrors) Response {
+func ValidationError(errs validator.ValidationErrors) Response {
 	var validationErrorsMessages []string
 
 	for _, err := range errs {
@@ -28,4 +30,14 @@ func ValidateError(errs validator.ValidationErrors) Response {
 	}
 
 	return Response{Errors: validationErrorsMessages}
+}
+
+func RenderError(w http.ResponseWriter, r *http.Request, statusCode int, errorMessage string) {
+	render.Status(r, statusCode)
+	render.JSON(w, r, Error(errorMessage))
+}
+
+func RenderValidationError(w http.ResponseWriter, r *http.Request, errors validator.ValidationErrors) {
+	render.Status(r, http.StatusUnprocessableEntity)
+	render.JSON(w, r, ValidationError(errors))
 }

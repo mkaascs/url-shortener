@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"url-shortener/internal/config"
+	"url-shortener/internal/http-server/handlers/url/delete"
 	"url-shortener/internal/http-server/handlers/url/save"
 	"url-shortener/internal/http-server/middleware/logger"
 	"url-shortener/internal/logging"
@@ -40,6 +41,7 @@ func main() {
 	router.Use(middleware.URLFormat)
 
 	router.Post("/url", save.New(lg, storage))
+	router.Delete("/url", delete.New(lg, storage))
 
 	lg.Info("starting server", slog.String("address", cfg.Address))
 
