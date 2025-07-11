@@ -41,7 +41,7 @@ func main() {
 	router.Use(middleware.URLFormat)
 
 	router.Post("/url", save.New(lg, storage))
-	router.Delete("/url", delete.New(lg, storage))
+	router.Delete("/url/{alias}", delete.New(lg, storage))
 
 	lg.Info("starting server", slog.String("address", cfg.Address))
 

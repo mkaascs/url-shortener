@@ -2,9 +2,9 @@ package delete
 
 import (
 	"errors"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
 	"log/slog"
 	"net/http"
 	"url-shortener/internal/lib/api/response"
@@ -14,10 +14,6 @@ import (
 
 type URLDeleter interface {
 	DeleteURL(alias string) error
-}
-
-type Request struct {
-	Alias string `json:"alias" validate:"required"`
 }
 
 type Response struct {
@@ -31,28 +27,15 @@ func New(log *slog.Logger, deleter URLDeleter) http.HandlerFunc {
 			slog.String("fn", fn),
 			slog.String("request_id", middleware.GetReqID(r.Context())))
 
-		var request Request
-		err := render.DecodeJSON(r.Body, &request)
-		if err != nil {
-			log.Error("failed to decode request body", sl.Error(err))
+		alias := chi.URLParam(r, "alias")
+		if alias == "" {
+			log.Error("empty alias in url path")
 			response.RenderError(w, r,
 				http.StatusBadRequest,
-				"failed to decode request body")
-			return
+				"empty alias in url path")
 		}
 
-		log.Info("request body decoded", slog.Any("request", request))
-
-		if err := validator.New().Struct(request); err != nil {
-			var validateErrs validator.ValidationErrors
-			errors.As(err, &validateErrs)
-
-			log.Error("invalid request", sl.Error(err))
-			response.RenderValidationError(w, r, validateErrs)
-			return
-		}
-
-		err = deleter.DeleteURL(request.Alias)
+		err := deleter.DeleteURL(alias)
 		if errors.Is(err, storage.ErrURLNotFound) {
 			log.Info("url does not exist: %s", sl.Error(err))
 			response.RenderError(w, r,
@@ -69,7 +52,7 @@ func New(log *slog.Logger, deleter URLDeleter) http.HandlerFunc {
 			return
 		}
 
-		log.Info("url deleted", slog.String("alias", request.Alias))
+		log.Info("url deleted", slog.String("alias", alias))
 		render.Status(r, http.StatusNoContent)
 	}
 }
