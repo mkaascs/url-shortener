@@ -23,16 +23,17 @@ type Response struct {
 func New(log *slog.Logger, deleter URLDeleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const fn = "handlers.url.delete.New"
-		log = slog.With(
+		log = log.With(
 			slog.String("fn", fn),
 			slog.String("request_id", middleware.GetReqID(r.Context())))
 
 		alias := chi.URLParam(r, "alias")
 		if alias == "" {
-			log.Error("empty alias in url path")
+			log.Info("no alias provided")
 			response.RenderError(w, r,
 				http.StatusBadRequest,
-				"empty alias in url path")
+				"no alias provided")
+			return
 		}
 
 		err := deleter.DeleteURL(alias)
