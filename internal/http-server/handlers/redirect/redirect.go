@@ -15,6 +15,20 @@ type URLGetter interface {
 	GetURL(alias string) (string, error)
 }
 
+type Response struct {
+	response.Response
+}
+
+// New @Summary Redirect to URL
+// @Description Redirect to URL by shorted alias
+// @Tags redirect
+// @Accept json
+// @Produce json
+// @Param alias path string true "Short URL alias"
+// @Success 307
+// @Failure 400 {object} Response
+// @Failure 404 {object} Response
+// @Router /{alias} [get]
 func New(log *slog.Logger, getter URLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const fn = "handlers.redirect.New"

@@ -20,6 +20,16 @@ type Response struct {
 	response.Response
 }
 
+// New @Summary Delete URL
+// @Description Delete URL with shorted alias
+// @Tags url
+// @Accept json
+// @Produce json
+// @Param alias path string true "Short URL alias"
+// @Success 204
+// @Failure 400 {object} Response
+// @Failure 404 {object} Response
+// @Router /url/{alias} [delete]
 func New(log *slog.Logger, deleter URLDeleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const fn = "handlers.url.delete.New"

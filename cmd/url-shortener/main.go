@@ -1,12 +1,18 @@
 package main
 
+// @title URL Shortener API
+// @version 1.0
+// @description REST API to short long urls
+
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	_ "url-shortener/docs"
 	"url-shortener/internal/config"
 	"url-shortener/internal/http-server/handlers/redirect"
 	"url-shortener/internal/http-server/handlers/url/delete"
@@ -40,6 +46,10 @@ func main() {
 	router.Use(logger.New(lg))
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
+
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	router.Post("/url", save.New(lg, storage))
 	router.Delete("/url/{alias}", delete.New(lg, storage))

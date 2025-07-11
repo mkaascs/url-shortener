@@ -20,16 +20,29 @@ type URLSaver interface {
 	SaveURL(urlToSave string, alias string) (int64, error)
 }
 
+// Request for URL creation
 type Request struct {
 	URL   string `json:"url" validate:"required,url"`
 	Alias string `json:"alias,omitempty"`
 }
 
+// Response with short URL and errors
 type Response struct {
 	response.Response
 	Alias string `json:"alias,omitempty"`
 }
 
+// New @Summary Create short URL
+// @Description Converts long URL to short alias
+// @Tags url
+// @Accept json
+// @Produce json
+// @Param request body Request true "URL data"
+// @Success 201 {object} Response
+// @Failure 400 {object} Response
+// @Failure 409 {object} Response
+// @Failure 422 {object} Response
+// @Router /url [post]
 func New(log *slog.Logger, saver URLSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const fn = "handlers.url.save.New"
